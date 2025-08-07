@@ -17,9 +17,11 @@ A simple, privacy-focused web tool to convert Microsoft Teams chat exports (`mes
 ## 🚀 How to Use
 
 1. **Export your Teams chat**
-   - Go to Microsoft Teams
-   - Navigate to your chat or channel
-   - Export the conversation as JSON (this creates a `messages.json` file)
+   - Go to [Microsoft Teams privacy settings](https://privacy.teams.live.com/ui/en/dataexport)
+   - Ask for a copy of tour messages (no media)
+   - wait
+   - Download the tar archive
+   - extract the conversations messages.json
 
 2. **Convert the file**
    - Open the [converter tool](https://alexprox7.github.io/Export-teams-chats-for-humans/)
