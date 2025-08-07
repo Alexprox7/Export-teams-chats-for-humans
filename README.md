@@ -1,6 +1,6 @@
 # 📱 Teams Messages to Text Converter
 
-> 🌐 **[Try it live here!](https://yourusername.github.io/teams-messages-converter)**
+> 🌐 **[Try it live here!](https://alexprox7.github.io/Export-teams-chats-for-humans/)**
 
 A simple, privacy-focused web tool to convert Microsoft Teams chat exports (`messages.json`) into readable text format. No servers, no data upload - everything runs directly in your browser!
 
@@ -22,7 +22,7 @@ A simple, privacy-focused web tool to convert Microsoft Teams chat exports (`mes
    - Export the conversation as JSON (this creates a `messages.json` file)
 
 2. **Convert the file**
-   - Open the [converter tool](https://yourusername.github.io/teams-messages-converter)
+   - Open the [converter tool](https://alexprox7.github.io/Export-teams-chats-for-humans/)
    - Drag and drop your `messages.json` file onto the upload area
    - Or click to browse and select the file
 
