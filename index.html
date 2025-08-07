@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams Messages to Text Converter</title>
+    <meta name="description" content="Convert Microsoft Teams chat exports to readable text format. Privacy-focused, client-side processing.">
+    <meta name="keywords" content="Microsoft Teams, chat export, messages, converter, JSON to text">
+    <meta name="author" content="Teams Messages Converter">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Teams Messages to Text Converter">
+    <meta property="og:description" content="Convert Microsoft Teams chat exports to readable text format. Privacy-focused, client-side processing.">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:title" content="Teams Messages to Text Converter">
+    <meta property="twitter:description" content="Convert Microsoft Teams chat exports to readable text format. Privacy-focused, client-side processing.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .status.info {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196f3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .progress {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            text-align: left;
+            display: none;
+        }
+
+        .file-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .file-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .upload-area {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teams Messages Converter</h1>
+        <p class="subtitle">Converti i tuoi messaggi di Microsoft Teams in formato testo leggibile</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Trascina il file messages.json qui</div>
+            <div class="upload-subtext">oppure clicca per selezionare il file</div>
+        </div>
+        
+        <input type="file" id="fileInput" accept=".json" />
+        
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div class="file-info" id="fileInfo">
+            <h3>Informazioni sul file:</h3>
+            <p id="fileStats"></p>
+        </div>
+        
+        <div id="downloadSection" style="display: none;">
+            <button class="btn" id="downloadBtn">📥 Scarica chat_estratta.txt</button>
+        </div>
+    </div>
+
+    <script>
+        // Multi-language support
+        const translations = {
+            it: {
+                title: "Teams Messages Converter",
+                subtitle: "Converti i tuoi messaggi di Microsoft Teams in formato testo leggibile",
+                uploadText: "Trascina il file messages.json qui",
+                uploadSubtext: "oppure clicca per selezionare il file",
+                downloadBtn: "📥 Scarica chat_estratta.txt",
+                reading: "📄 Lettura file in corso...",
+                success: "✅ Conversione completata con successo!",
+                errorInvalidFile: "❌ Errore: Seleziona un file JSON valido",
+                errorConversion: "❌ Errore durante la conversione:",
+                errorReading: "❌ Errore durante la lettura del file",
+                noData: "❌ Nessun dato da scaricare",
+                downloadComplete: "📥 Download completato!",
+                fileInfoTitle: "Informazioni sul file:",
+                conversationsProcessed: "Conversazioni elaborate:",
+                totalMessages: "Messaggi totali:",
+                noTopic: "[Nessun argomento]",
+                unknownSender: "[Mittente sconosciuto]",
+                unknownDate: "[Data sconosciuta]",
+                conversationHeader: "=== Conversazione:"
+            },
+            en: {
+                title: "Teams Messages Converter",
+                subtitle: "Convert your Microsoft Teams messages to readable text format",
+                uploadText: "Drag the messages.json file here",
+                uploadSubtext: "or click to select the file",
+                downloadBtn: "📥 Download chat_extracted.txt",
+                reading: "📄 Reading file...",
+                success: "✅ Conversion completed successfully!",
+                errorInvalidFile: "❌ Error: Please select a valid JSON file",
+                errorConversion: "❌ Error during conversion:",
+                errorReading: "❌ Error reading the file",
+                noData: "❌ No data to download",
+                downloadComplete: "📥 Download completed!",
+                fileInfoTitle: "File information:",
+                conversationsProcessed: "Conversations processed:",
+                totalMessages: "Total messages:",
+                noTopic: "[No topic]",
+                unknownSender: "[Unknown sender]",
+                unknownDate: "[Unknown date]",
+                conversationHeader: "=== Conversation:"
+            },
+            es: {
+                title: "Conversor de Mensajes de Teams",
+                subtitle: "Convierte tus mensajes de Microsoft Teams a formato de texto legible",
+                uploadText: "Arrastra el archivo messages.json aquí",
+                uploadSubtext: "o haz clic para seleccionar el archivo",
+                downloadBtn: "📥 Descargar chat_extraido.txt",
+                reading: "📄 Leyendo archivo...",
+                success: "✅ ¡Conversión completada con éxito!",
+                errorInvalidFile: "❌ Error: Por favor selecciona un archivo JSON válido",
+                errorConversion: "❌ Error durante la conversión:",
+                errorReading: "❌ Error al leer el archivo",
+                noData: "❌ No hay datos para descargar",
+                downloadComplete: "📥 ¡Descarga completada!",
+                fileInfoTitle: "Información del archivo:",
+                conversationsProcessed: "Conversaciones procesadas:",
+                totalMessages: "Mensajes totales:",
+                noTopic: "[Sin tema]",
+                unknownSender: "[Remitente desconocido]",
+                unknownDate: "[Fecha desconocida]",
+                conversationHeader: "=== Conversación:"
+            },
+            fr: {
+                title: "Convertisseur de Messages Teams",
+                subtitle: "Convertissez vos messages Microsoft Teams au format texte lisible",
+                uploadText: "Glissez le fichier messages.json ici",
+                uploadSubtext: "ou cliquez pour sélectionner le fichier",
+                downloadBtn: "📥 Télécharger chat_extrait.txt",
+                reading: "📄 Lecture du fichier...",
+                success: "✅ Conversion terminée avec succès !",
+                errorInvalidFile: "❌ Erreur : Veuillez sélectionner un fichier JSON valide",
+                errorConversion: "❌ Erreur lors de la conversion :",
+                errorReading: "❌ Erreur lors de la lecture du fichier",
+                noData: "❌ Aucune donnée à télécharger",
+                downloadComplete: "📥 Téléchargement terminé !",
+                fileInfoTitle: "Informations sur le fichier :",
+                conversationsProcessed: "Conversations traitées :",
+                totalMessages: "Messages totaux :",
+                noTopic: "[Aucun sujet]",
+                unknownSender: "[Expéditeur inconnu]",
+                unknownDate: "[Date inconnue]",
+                conversationHeader: "=== Conversation :"
+            },
+            de: {
+                title: "Teams Nachrichten Konverter",
+                subtitle: "Konvertieren Sie Ihre Microsoft Teams Nachrichten in lesbares Textformat",
+                uploadText: "Ziehen Sie die messages.json Datei hierher",
+                uploadSubtext: "oder klicken Sie, um die Datei auszuwählen",
+                downloadBtn: "📥 chat_extrahiert.txt herunterladen",
+                reading: "📄 Datei wird gelesen...",
+                success: "✅ Konvertierung erfolgreich abgeschlossen!",
+                errorInvalidFile: "❌ Fehler: Bitte wählen Sie eine gültige JSON-Datei",
+                errorConversion: "❌ Fehler bei der Konvertierung:",
+                errorReading: "❌ Fehler beim Lesen der Datei",
+                noData: "❌ Keine Daten zum Herunterladen",
+                downloadComplete: "📥 Download abgeschlossen!",
+                fileInfoTitle: "Datei-Informationen:",
+                conversationsProcessed: "Verarbeitete Unterhaltungen:",
+                totalMessages: "Gesamte Nachrichten:",
+                noTopic: "[Kein Thema]",
+                unknownSender: "[Unbekannter Absender]",
+                unknownDate: "[Unbekanntes Datum]",
+                conversationHeader: "=== Unterhaltung:"
+            }
+        };
+
+        // Detect user language
+        const userLang = navigator.language.slice(0, 2);
+        const currentLang = translations[userLang] || translations.en;
+
+        let processedData = '';
+        let currentFilename = 'chat_estratta.txt';
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileStats = document.getElementById('fileStats');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Initialize translations
+        function initializeTranslations() {
+            document.querySelector('h1').textContent = currentLang.title;
+            document.querySelector('.subtitle').textContent = currentLang.subtitle;
+            document.querySelector('.upload-text').textContent = currentLang.uploadText;
+            document.querySelector('.upload-subtext').textContent = currentLang.uploadSubtext;
+            downloadBtn.textContent = currentLang.downloadBtn;
+            document.querySelector('#fileInfo h3').textContent = currentLang.fileInfoTitle;
+
+            // Set filename based on language
+            switch(userLang) {
+                case 'en': currentFilename = 'chat_extracted.txt'; break;
+                case 'es': currentFilename = 'chat_extraido.txt'; break;
+                case 'fr': currentFilename = 'chat_extrait.txt'; break;
+                case 'de': currentFilename = 'chat_extrahiert.txt'; break;
+                default: currentFilename = 'chat_estratta.txt';
+            }
+        }
+
+        // Gestione drag & drop
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        downloadBtn.addEventListener('click', downloadFile);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeTranslations);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function showStatus(message, type) {
+            status.innerHTML = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function showProgress(percent) {
+            progress.style.display = 'block';
+            progressFill.style.width = percent + '%';
+        }
+
+        function hideProgress() {
+            progress.style.display = 'none';
+            progressFill.style.width = '0%';
+        }
+
+        function processFile(file) {
+            if (!file.name.endsWith('.json')) {
+                showStatus('❌ ' + currentLang.errorInvalidFile, 'error');
+                return;
+            }
+
+            showStatus(currentLang.reading, 'info');
+            showProgress(10);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    showProgress(30);
+                    const data = JSON.parse(e.target.result);
+                    showProgress(50);
+                    
+                    const result = convertMessages(data);
+                    showProgress(90);
+                    
+                    processedData = result.text;
+                    
+                    showStatus('✅ ' + currentLang.success, 'success');
+                    fileStats.textContent = `${currentLang.conversationsProcessed} ${result.conversationCount} | ${currentLang.totalMessages} ${result.messageCount}`;
+                    fileInfo.style.display = 'block';
+                    downloadSection.style.display = 'block';
+                    showProgress(100);
+                    
+                    setTimeout(hideProgress, 1000);
+                    
+                } catch (error) {
+                    console.error('Errore durante la conversione:', error);
+                    showStatus(`❌ ${currentLang.errorConversion} ${error.message}`, 'error');
+                    hideProgress();
+                }
+            };
+            
+            reader.onerror = function() {
+                showStatus('❌ ' + currentLang.errorReading, 'error');
+                hideProgress();
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function convertMessages(data) {
+            const conversations = data.conversations || [];
+            let conversationsOutput = [];
+            let totalMessages = 0;
+
+            // Processa ogni conversazione
+            for (const conv of conversations) {
+                const topic = conv.threadProperties?.topic || currentLang.noTopic;
+                const convId = conv.id || '[No ID]';
+                const msgLines = [];
+
+                // Ordina i messaggi per data
+                const sortedMsgs = (conv.MessageList || []).sort((a, b) => {
+                    const timeA = a.originalarrivaltime || '';
+                    const timeB = b.originalarrivaltime || '';
+                    return timeA.localeCompare(timeB);
+                });
+
+                for (const msg of sortedMsgs) {
+                    const rawTime = msg.originalarrivaltime;
+                    let timestamp;
+                    
+                    try {
+                        const dt = new Date(rawTime);
+                        if (isNaN(dt.getTime())) {
+                            timestamp = currentLang.unknownDate;
+                        } else {
+                            timestamp = dt.toLocaleString('it-IT', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }).replace(',', '');
+                        }
+                    } catch (error) {
+                        timestamp = currentLang.unknownDate;
+                    }
+
+                    const sender = msg.from || currentLang.unknownSender;
+                    const contentHtml = msg.content || '';
+                    
+                    // Pulisce il contenuto HTML
+                    const text = cleanHtmlContent(contentHtml);
+
+                    if (text.trim()) {
+                        msgLines.push(`[${timestamp}] ${sender}: ${text}`);
+                        totalMessages++;
+                    }
+                }
+
+                // Aggiunge la conversazione solo se ha messaggi
+                if (msgLines.length > 0) {
+                    const firstMsgTime = sortedMsgs[0]?.originalarrivaltime || '';
+                    const conversationBlock = [
+                        `\n${currentLang.conversationHeader} ${topic} (${convId}) ===`,
+                        ...msgLines
+                    ];
+                    conversationsOutput.push({
+                        time: firstMsgTime,
+                        lines: conversationBlock
+                    });
+                }
+            }
+
+            // Ordina tutte le conversazioni per data del primo messaggio
+            conversationsOutput.sort((a, b) => a.time.localeCompare(b.time));
+
+            // Genera il testo finale
+            const finalText = conversationsOutput
+                .map(conv => conv.lines.join('\n'))
+                .join('\n') + '\n';
+
+            return {
+                text: finalText,
+                conversationCount: conversationsOutput.length,
+                messageCount: totalMessages
+            };
+        }
+
+        function cleanHtmlContent(html) {
+            if (!html) return '';
+            
+            // Crea un elemento temporaneo per pulire l'HTML
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            // Rimuove script e stili
+            const scripts = temp.querySelectorAll('script, style');
+            scripts.forEach(el => el.remove());
+            
+            // Ottiene il testo pulito
+            let text = temp.textContent || temp.innerText || '';
+            
+            // Pulisce spazi multipli e caratteri speciali
+            text = text.replace(/\s+/g, ' ').trim();
+            
+            // Decodifica entità HTML
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            text = textarea.value;
+            
+            return text;
+        }
+
+        function downloadFile() {
+            if (!processedData) {
+                showStatus('❌ ' + currentLang.noData, 'error');
+                return;
+            }
+
+            const blob = new Blob([processedData], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('📥 ' + currentLang.downloadComplete, 'success');
+        }
+    </script>
+</body>
+</html>
