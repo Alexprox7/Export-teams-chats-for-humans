@@ -73,4 +73,8 @@ The interface automatically adapts to your browser's language:
 ## 📝 License
 
 This project is licensed under the MIT License
+
+## 🎩 Credit
+
+I'd like to credit becausecurious on reddit that did this very similarly before me https://becausecurious.me/skype_exports_for_humans his website is still working nowadays even for teams as they share the same messages.json structure
 </p>
